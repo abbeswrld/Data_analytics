@@ -36,6 +36,43 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     networks:
       - database_network 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks: 
+    - database_network
+  redash:
+    image: redash/redash:latest
+    container_name: redash
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      REDASH_REDIS_URL: redis://redis:6379/0
+      REDASH_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/redash_metadata"
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_COOKIE_SECRET: "${REDASH_COOKIE_SECRET}"
+    ports:
+      - "5000:5000"
+    networks: 
+      - database_network
+  worker:
+    image: redash/redash:latest
+    container_name: redash_worker
+    depends_on:
+      - redash
+      - redis
+      - postgres
+    environment:
+      REDASH_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/redash_metadata"
+      REDASH_REDIS_URL: "redis://redis:6379/0"
+      REDASH_COOKIE_SECRET: "${REDASH_COOKIE_SECRET}"
+      REDASH_SECRET_KEY: "${REDASH_SECRET_KEY}"
+      QUEUES: "queries,celery"
+    networks:
+      - database_network
+    restart: unless-stopped
+    command: scheduler
 
 volumes:
   postgres_data:
