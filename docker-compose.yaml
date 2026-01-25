@@ -17,11 +17,28 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks: 
-      - network
+    networks:
+    - database_network 
+
+  generator:
+    build: 
+      context: ./generator
+      dockerfile: Dockerfile
+    container_name: generator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - database_network 
 
 volumes:
   postgres_data:
 networks:
-  network:
+  database_network: 
     driver: bridge
