@@ -17,9 +17,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-    - database_network 
-
   generator:
     build: 
       context: ./generator
@@ -34,8 +31,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    networks:
-      - database_network 
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -54,8 +49,6 @@ services:
       REDASH_COOKIE_SECRET: "${REDASH_COOKIE_SECRET}"
     ports:
       - "5000:5000"
-    networks: 
-      - database_network
   worker:
     image: redash/redash:latest
     container_name: redash_worker
@@ -69,13 +62,8 @@ services:
       REDASH_COOKIE_SECRET: "${REDASH_COOKIE_SECRET}"
       REDASH_SECRET_KEY: "${REDASH_SECRET_KEY}"
       QUEUES: "queries,celery"
-    networks:
-      - database_network
     restart: unless-stopped
     command: scheduler
 
 volumes:
   postgres_data:
-networks:
-  database_network: 
-    driver: bridge
